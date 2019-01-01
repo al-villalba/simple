@@ -1,0 +1,11 @@
+.DS_Store
+#.*
+nbproject/
+
+config/local
+mvc/controllers/*
+!mvc/controllers/.gitkeep
+mvc/src/*
+!mvc/src/.gitkeep
+mvc/views/*
+!mvc/views/.gitkeep

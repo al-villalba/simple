@@ -1,0 +1,12 @@
+<?php $this->extendTemplate('layout.phtml'); ?>
+
+<?php $this->startBlock(); ?>
+<div>
+	<section>
+		<h2>Section</h2>
+	</section>
+</div>
+<div>
+	<?php $this->requireTemplate('widgets/aside.phtml'); ?>
+</div>
+<?php $this->endBlock('trunk'); ?>

@@ -1,0 +1,10 @@
+{
+	"require" : {
+		"jelix/fakeserverconf": "~1.0.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"Simple\\": "./vendor/simple/mvc/src/"
+		}
+	}
+}
