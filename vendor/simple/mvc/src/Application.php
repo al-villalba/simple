@@ -10,7 +10,7 @@ namespace Simple;
  */
 class Application implements \ArrayAccess
 {
-	const VERSION = '0-20181001';
+	const VERSION = '0-20190101';
 
 	/**
 	 * Singleton instance
