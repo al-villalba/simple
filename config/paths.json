@@ -1,5 +1,0 @@
-{
-	"public": "%PATH_ROOT%/bin/www",
-	"var":    "%PATH_ROOT%/var",
-	"vendor": "%PATH_ROOT%/vendor"
-}

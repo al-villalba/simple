@@ -42,6 +42,12 @@ class HttpRequestTest extends TestCase
 	 */
 	public function test__construct()
 	{
+		// cgi request (GET)
+		\Simple\Application::getInstance()['php_sapi'] = 'cgi';
+		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
+		$server->setHttpRequest('http://simple.poc.local/');
+		
+		\Simple\Application::getInstance()['route'] = new \Simple\Route();
 		$request = new \Simple\Http\Request();
 		$this->assertTrue($request instanceof \Simple\HTTP\Request);
 	}
@@ -51,12 +57,13 @@ class HttpRequestTest extends TestCase
 	 */
 	public function testGetParam()
 	{
-		// simulate cgi request (GET)
+		// cgi request (GET)
 		\Simple\Application::getInstance()['php_sapi'] = 'cgi';
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/');
 		$_GET = ['a' => 0, 'b' => 1];
 
+		\Simple\Application::getInstance()['route'] = new \Simple\Route();
 		$request = new \Simple\Http\Request();
 
 		$this->assertSame('0', $request->getParam('a'));
@@ -71,12 +78,13 @@ class HttpRequestTest extends TestCase
 	 */
 	public function testGetParams()
 	{
-		// simulate cgi request (GET)
+		// cgi request (GET)
 		\Simple\Application::getInstance()['php_sapi'] = 'cgi';
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/');
 		$_GET = ['a' => 0, 'b' => 1];
 		
+		\Simple\Application::getInstance()['route'] = new \Simple\Route();
 		$request = new \Simple\Http\Request();
 		
 		$this->assertEquals(

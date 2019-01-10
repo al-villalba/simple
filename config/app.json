@@ -2,5 +2,10 @@
 	"title":       "My Simple App",
 	"description": "An application made with Simple framework",
 
-	"theme":       "default"
+	"theme":       "bootstrap",
+	
+	"paths": {
+		"cache":   "%PATH_ROOT%/var/cache",
+		"log":     "%PATH_ROOT%/var/log"
+	}
 }

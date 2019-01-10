@@ -207,12 +207,15 @@ class Application implements \ArrayAccess
 	 */
 	public function run()
 	{
-		$this['request'] = RequestFactory::create();
-		$this['route']   = new Route($this['request']);
-
 		try {
 			// load controller/command class and define action metohd
-			$this->_loadController();
+			list($controller, $action) = $this->_initRequest();
+			
+			if( !isset($this['controller']) || substr(get_class($this['controller']), 0, 5) != 'Mock_' ) {
+				// do not overwrite unit test with Mock_* controller
+				$this['controller'] = new $controller();
+			}
+			$this['action'] = $action;
 		} catch( \Exception $e ) {
 			// ???
 			throw $e;
@@ -224,6 +227,9 @@ class Application implements \ArrayAccess
 
 		/** @var ResponseInterface */
 		$response = $this['controller']->{$this['action']}();
+		if( $this['response'] instanceof ResponseInterface ) {
+			$response = $this['response'];
+		}
 
 		if( ! $response instanceof ResponseInterface ) {
 			throw new \Exception(
@@ -239,35 +245,35 @@ class Application implements \ArrayAccess
 	}
 
 	/**
-	 * Define Cotroller/Command class and action method
+	 * Define controller/command class and action method
 	 */
-	protected function _loadController()
+	protected function _initRequest()
 	{
+		$this['route']   = new Route();
+		
 		$sapiName = $this['sapi_name'] ?? php_sapi_name();
 		if( $sapiName == 'cli' ) {
+			// cli
+			$this['request'] = RequestFactory::create();
 			$cmd = explode('/', trim($this['request']->getParam(0), '/'));
+			$route = $this['route']->get('/' . __NAMESPACE__
+				. '/' . \Simple\strCamelCase($cmd[0])
+				. '/' . (isset($cmd[1]) ? lcfirst(\Simple\strCamelCase($cmd[1])) : 'run')
+			);
 			/** @see http://php.net/manual/en/language.namespaces.dynamic.php */
-			$controllerClass = __NAMESPACE__ . "\\Command\\" . ucfirst($cmd[0]);
-			$action = isset($cmd[1]) ? $cmd[1] : 'run';
-			if( !class_exists($controllerClass) ) {
-				$_SERVER['REQUEST_URI'] = '/' . trim($this['request']->getParam(0), '/');
-				$route = $this['route']->get();
-				$controllerClass = __NAMESPACE__ . "\\Controller\\{$route['controller']}";
-				$action = $route['action'];
+			$controller = "{$route['namespace']}\\Command\\{$route['controller']}";
+			if( !class_exists($controller) ) {
+				$controller = "{$route['namespace']}\\Controller\\{$route['controller']}";
 			}
 		} else {
 			// cgi
 			$route = $this['route']->get();
 			/** @see http://php.net/manual/en/language.namespaces.dynamic.php */
-			$controllerClass = __NAMESPACE__ . "\\Controller\\{$route['controller']}";
-			$action = $route['action'];
+			$controller = "{$route['namespace']}\\Controller\\{$route['controller']}";
+			$this['request'] = RequestFactory::create();
 		}
 
-		if( !isset($this['controller']) || substr(get_class($this['controller']), 0, 5) != 'Mock_' ) {
-			// do not overwrite unit test with Mock_* controller
-			$this['controller'] = new $controllerClass();
-		}
-		$this['action'] = $action;
+		return [$controller, $route['action']];
 	}
 
 }

@@ -26,7 +26,7 @@
 	</testsuites>
 
 	<logging>
-		<log type="coverage-html" target="/home/pichu/public_html/test-coverage/simple" lowUpperBound="35" highLowerBound="70"/>
+		<log type="coverage-html" target="./public_html/test-coverage/simple" lowUpperBound="35" highLowerBound="70"/>
 	</logging>
 
 	<filter>

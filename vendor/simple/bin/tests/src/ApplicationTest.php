@@ -4,16 +4,11 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Test Simple\Application
+ * (singleton)
  * @runTestsInSeparateProcesses
  */
 class ApplicationTest extends TestCase
 {
-	/**
-	 * Object under test (singleton)
-	 * @var Simple\Application
-	 */
-	protected $_app = null;
-
 	/**
 	 * @var array
 	 */
@@ -28,8 +23,6 @@ class ApplicationTest extends TestCase
 	protected function setUp()
 	{
 		global $argv;
-
-		$this->_app = \Simple\Application::getInstance();
 
 		// backup used globals
 		$this->_globals['_SERVER'] = $_SERVER;
@@ -51,8 +44,6 @@ class ApplicationTest extends TestCase
 			$$var = $value;
 		}
 
-		$this->_app = null;
-
 		parent::tearDown();
 	}
 
@@ -61,13 +52,15 @@ class ApplicationTest extends TestCase
 	 */
 	public function testInstanceOf()
 	{
-		$this->assertTrue($this->_app instanceof \Simple\Application);
-		$this->assertTrue(is_array($this->_app['config']));
-		$this->_app['dummy'] = function() {return 'dummy';};
-		$this->assertSame('dummy', $this->_app['dummy']);
-		unset($this->_app['dummy']);
-		$this->assertFalse(isset($this->_app['dummy']));
-		$this->assertSame(null, $this->_app['dummy']);
+		$app = \Simple\Application::getInstance();
+		
+		$this->assertTrue($app instanceof \Simple\Application);
+		$this->assertTrue(is_array($app['config']));
+		$app['dummy'] = function() {return 'dummy';};
+		$this->assertSame('dummy', $app['dummy']);
+		unset($app['dummy']);
+		$this->assertFalse(isset($app['dummy']));
+		$this->assertSame(null, $app['dummy']);
 	}
 
 	/**
@@ -75,20 +68,35 @@ class ApplicationTest extends TestCase
 	 */
 	public function testSingleton()
 	{
+		$app = \Simple\Application::getInstance();
+		
 		$e = null;
 		try {
-			$dummy = clone $this->_app;
+			$dummy = clone $app;
 		} catch(\Exception $e) {
 		}
 		$this->assertTrue($e instanceof \Exception);
 
 		$e = null;
 		try {
-			$dummy = serialize($this->_app);
-			$app = unserialize($dummy);
+			$dummy = serialize($app);
+			$_app = unserialize($dummy);
 		} catch(\Exception $e) {
 		}
 		$this->assertTrue($e instanceof \Exception);
+	}
+
+	/**
+	 * test global functions in bootstrap.php
+	 */
+	public function testGlobals()
+	{
+		$str = 'camelCaseTest';
+		$slug = \Simple\strSlugify($str);
+		$this->assertSame('camel-case-test', $slug);
+		
+		$_str = \Simple\strCamelCase($slug);
+		$this->assertSame('CamelCaseTest', $_str);
 	}
 
 	/**
@@ -96,15 +104,17 @@ class ApplicationTest extends TestCase
 	 */
 	public function testDbFetch()
 	{
-		if( empty($this->_app['config']['database']) ) {
-			$this->assertNull($this->_app['db']);
+		$app = \Simple\Application::getInstance();
+		
+		if( empty($app['config']['database']) ) {
+			$this->assertNull($app['db']);
 			return;
 		}
-		$this->assertTrue($this->_app['db'] instanceof \PDO);
+		$this->assertTrue($app['db'] instanceof \PDO);
 
 		// simple query
 		$q = "SHOW TABLES";
-		$stmt = $this->_app['db']->query($q);
+		$stmt = $app['db']->query($q);
 		$results = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
 		$this->assertTrue(is_array($results));
@@ -112,7 +122,7 @@ class ApplicationTest extends TestCase
 
 		// prepared query with ? parameters
 		$q = "SHOW TABLES LIKE ?";
-		$stmt = $this->_app['db']->prepare($q);
+		$stmt = $app['db']->prepare($q);
 		$stmt->execute(['%']);
 		$results = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
@@ -121,7 +131,7 @@ class ApplicationTest extends TestCase
 
 		// prepared query with named parameters
 		$q = "SHOW TABLES LIKE :tablename";
-		$stmt = $this->_app['db']->prepare($q);
+		$stmt = $app['db']->prepare($q);
 		$stmt->execute([':tablename' => '%']);
 		$results = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
@@ -134,10 +144,12 @@ class ApplicationTest extends TestCase
 	 */
 	public function testDbExec()
 	{
-		$this->_app['db']->exec("SET time_zone = '+00:00'");
-		$this->assertSame('00000', $this->_app['db']->errorCode());
+		$app = \Simple\Application::getInstance();
+		
+		$app['db']->exec("SET time_zone = '+00:00'");
+		$this->assertSame('00000', $app['db']->errorCode());
 
-		$stmt = $this->_app['db']->query("SELECT @@global.time_zone, @@session.time_zone");
+		$stmt = $app['db']->query("SELECT @@global.time_zone, @@session.time_zone");
 		$results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 		$this->assertSame([['@@global.time_zone' => 'SYSTEM', '@@session.time_zone' => '+00:00']], $results);
 	}
@@ -149,11 +161,13 @@ class ApplicationTest extends TestCase
 	{
 		global $argv;
 
+		$app = \Simple\Application::getInstance();
+		
 		// supress output to stdout
 		$this->setOutputCallback(function() {});
 
 		// prepare args
-		$this->_app['sapi_name'] = 'cli';
+		$app['sapi_name'] = 'cli';
 		foreach( $this->_env as $var => $value ) {
 			putenv("$var=$value");
 		}
@@ -166,7 +180,7 @@ class ApplicationTest extends TestCase
 			'get' => 'a=0&b=1'
 		];
 
-		$object = $this->_app->run();
+		$object = $app->run();
 
 		$this->assertTrue($object instanceof \Simple\Application);
 	}
@@ -182,12 +196,14 @@ class ApplicationTest extends TestCase
 		// supress output to stdout
 		$this->setOutputCallback(function() {});
 
+		$app = \Simple\Application::getInstance();
+		
 		// simulate cgi request
-		$this->_app['sapi_name'] = 'cgi';
+		$app['sapi_name'] = 'cgi';
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/');
 
-		$object = $this->_app->run();
+		$object = $app->run();
 
 		$this->assertTrue($object instanceof \Simple\Application);
 	}
@@ -197,21 +213,23 @@ class ApplicationTest extends TestCase
 	 */
 	public function testRun_exception()
 	{
+		$app = \Simple\Application::getInstance();
+		
 		$stubController = 
 			$this->createMock(\Simple\Controller\Homepage::class);
 		$stubController->expects($this->once())
 				->method('index')
 				->willReturn(null);
-		$this->_app['controller'] = $stubController;
+		$app['controller'] = $stubController;
 
 		// simulate cgi request
-		$this->_app['sapi_name'] = 'cgi';
+		$app['sapi_name'] = 'cgi';
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/');
 
 		$e = null;
 		try {
-			$object = $this->_app->run();
+			$object = $app->run();
 		} catch(\Exception $e) {
 		}
 
@@ -225,8 +243,10 @@ class ApplicationTest extends TestCase
 	{
 		global $argv;
 
+		$app = \Simple\Application::getInstance();
+		
 		// prepare args
-		$this->_app['sapi_name'] = 'cli';
+		$app['sapi_name'] = 'cli';
 		foreach( $this->_env as $var => $value ) {
 			putenv("$var=$value");
 		}
@@ -241,7 +261,7 @@ class ApplicationTest extends TestCase
 
 		$e = null;
 		try {
-			$object = $this->_app->run();
+			$object = $app->run();
 		} catch(\Error $e) {
 		}
 
@@ -256,13 +276,15 @@ class ApplicationTest extends TestCase
 	 */
 	public function testRunCgi_exception404()
 	{
+		$app = \Simple\Application::getInstance();
+		
 		// simulate cgi request
-		$this->_app['sapi_name'] = 'cgi';
+		$app['sapi_name'] = 'cgi';
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/UndefinedController/undefinedAction');
 
 		try {
-			$object = $this->_app->run();
+			$object = $app->run();
 		} catch(\Error $e) {
 		}
 		$this->assertTrue($e instanceof \Error);

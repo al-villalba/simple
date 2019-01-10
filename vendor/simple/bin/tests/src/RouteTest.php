@@ -34,9 +34,15 @@ class RouteTest extends TestCase
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/');
 
-		$route = new \Simple\Route(new \Simple\Http\Request());
+		$route = new \Simple\Route();
 		$r = $route->get();
-		$this->assertSame('/', $r['_match']);
+		$this->assertSame([
+			'_match' => '/',
+			'namespace'  => 'Simple',
+			'controller' => 'Homepage',
+			'action'     => 'index',
+			'query'      => []
+		], $r);
 	}
 
 	public function testGetController()
@@ -45,10 +51,15 @@ class RouteTest extends TestCase
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/ctrl/?p1=v1');
 
-		$route = new \Simple\Route(new \Simple\Http\Request());
+		$route = new \Simple\Route();
 		$r = $route->get();
-		$this->assertSame('/{controller}', $r['_match']);
-		$this->assertSame(['p1' => 'v1'], $r['query']);
+		$this->assertSame([
+			'_match' => '/{controller}',
+			'namespace'  => 'Simple',
+			'controller' => 'Ctrl',
+			'action'     => 'index',
+			'query'      => ['p1' => 'v1']
+		], $r);
 	}
 
 	public function testGetControllerAction()
@@ -57,10 +68,15 @@ class RouteTest extends TestCase
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/ctrl/act/?p1=v1');
 
-		$route = new \Simple\Route(new \Simple\Http\Request());
+		$route = new \Simple\Route();
 		$r = $route->get();
-		$this->assertSame('/{controller}/{action}', $r['_match']);
-		$this->assertSame(['p1' => 'v1'], $r['query']);
+		$this->assertSame([
+			'_match' => '/{controller}/{action}',
+			'namespace'  => 'Simple',
+			'controller' => 'Ctrl',
+			'action'     => 'act',
+			'query'      => ['p1' => 'v1']
+		], $r);
 	}
 
 	public function testGetControllerActionParams()
@@ -69,10 +85,15 @@ class RouteTest extends TestCase
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/ctrl/act/p1/v1/?p2=v2');
 
-		$route = new \Simple\Route(new \Simple\Http\Request());
+		$route = new \Simple\Route();
 		$r = $route->get();
-		$this->assertSame('/{controller}/{action}/*', $r['_match']);
-		$this->assertSame(['p2' => 'v2', 'p1' => 'v1'], $r['query']);
+		$this->assertSame([
+			'_match' => '/{controller}/{action}/*',
+			'namespace'  => 'Simple',
+			'controller' => 'Ctrl',
+			'action'     => 'act',
+			'query'      => ['p1' => 'v1', 'p2' => 'v2']
+		], $r);
 	}
 
 	public function testGetNamespaceControllerAction()
@@ -81,10 +102,15 @@ class RouteTest extends TestCase
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/ns/ctrl/act/?p1=v1');
 
-		$route = new \Simple\Route(new \Simple\Http\Request());
+		$route = new \Simple\Route();
 		$r = $route->get();
-		$this->assertSame('/{namespace}/{controller}/{action}', $r['_match']);
-		$this->assertSame(['p1' => 'v1'], $r['query']);
+		$this->assertSame([
+			'_match' => '/{namespace}/{controller}/{action}',
+			'namespace'  => 'Ns',
+			'controller' => 'Ctrl',
+			'action'     => 'act',
+			'query'      => ['p1' => 'v1']
+		], $r);
 	}
 
 	public function testGetNamespaceControllerActionParams()
@@ -93,10 +119,15 @@ class RouteTest extends TestCase
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/ns/ctrl/act/p1/v1/?p2=v2');
 
-		$route = new \Simple\Route(new \Simple\Http\Request());
+		$route = new \Simple\Route();
 		$r = $route->get();
-		$this->assertSame('/{namespace}/{controller}/{action}/*', $r['_match']);
-		$this->assertSame(['p2' => 'v2', 'p1' => 'v1'], $r['query']);
+		$this->assertSame([
+			'_match' => '/{namespace}/{controller}/{action}/*',
+			'namespace'  => 'Ns',
+			'controller' => 'Ctrl',
+			'action'     => 'act',
+			'query'      => ['p1' => 'v1', 'p2' => 'v2']
+		], $r);
 	}
 
 	public function testGet_exception()
@@ -105,13 +136,63 @@ class RouteTest extends TestCase
 		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
 		$server->setHttpRequest('http://simple.poc.local/');
 
-		$route = new \Simple\Route(null);
+		$app = \Simple\Application::getInstance();
+		$configRoutingBak = $app['config']['routing'];
+		$app['config'] = array_merge(
+			$app['config'],
+			['routing' => null]
+		);
+		
+		$route = new \Simple\Route();
 		$e = null;
 		try {
 			$r = $route->get();
 		} catch( \Exception $e ) {
 		}
 		$this->assertTrue($e instanceof \Exception);
+		$app['config'] = array_merge(
+			$app['config'],
+			['routing' => $configRoutingBak]
+		);
+	}
+
+	public function testWrongParams()
+	{
+		// simulate cgi call
+		$server = new \Jelix\FakeServerConf\ApacheMod('/var/www/simple/bin/www/');
+		$server->setHttpRequest('http://simple.poc.local/ns/ctrl/act/p1/v1/p2?p3=v3');
+
+		$route = new \Simple\Route();
+		$r = $route->get();
+		$this->assertSame([
+			'_match' => '/{controller}/{action}/*',
+			'namespace'  => 'Simple',
+			'controller' => 'Ns',
+			'action'     => 'ctrl',
+			'query'      => ['act' => 'p1', 'v1' => 'p2', 'p3' => 'v3']
+		], $r);
+		
+		$server->setHttpRequest('http://simple.poc.local/ns/ctrl/act/p1/?p2=v2');
+		$route = new \Simple\Route();
+		$r = $route->get();
+		$this->assertSame([
+			'_match' => '/{controller}/{action}/*',
+			'namespace'  => 'Simple',
+			'controller' => 'Ns',
+			'action'     => 'ctrl',
+			'query'      => ['act' => 'p1', 'p2' => 'v2']
+		], $r);
+		
+		$server->setHttpRequest('http://simple.poc.local/ctrl/act/p1/?p2=v2');
+		$route = new \Simple\Route();
+		$r = $route->get();
+		$this->assertSame([
+			'_match' => '/{namespace}/{controller}/{action}',
+			'namespace'  => 'Ctrl',
+			'controller' => 'Act',
+			'action'     => 'p1',
+			'query'      => ['p2' => 'v2']
+		], $r);
 	}
 
 }

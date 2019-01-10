@@ -16,7 +16,8 @@ class Request extends \Simple\Http implements \Simple\RequestInterface
 	 */
 	public function __construct()
 	{
-		$body = http_build_query($_GET + $_POST);
+		$route = \Simple\Application::getInstance()['route']->get();
+		$body = http_build_query(($route['query'] ?? []) + $_GET + $_POST);
 		$headers = [
 			'Content-Type: application/x-www-form-urlencoded; charset=UTF-8',
 			'Content-Length: ' . strlen($body)

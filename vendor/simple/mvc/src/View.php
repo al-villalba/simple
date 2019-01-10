@@ -89,6 +89,9 @@ class View
 	protected function _setTemplatePathsByTheme($theme, &$paths)
 	{
 		$themeDir = "{$this->_basePath}/$theme/";
+		if( !is_dir($themeDir) ) {
+			return;
+		}
 
 		$directoryIterator = new \RecursiveCallbackFilterIterator(
 			new \RecursiveDirectoryIterator($themeDir, 

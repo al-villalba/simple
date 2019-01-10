@@ -13,7 +13,8 @@ class ViewTest extends TestCase
 	 */
 	public function testRenderFile()
 	{
-		$view = new Simple\View(null, \Simple\Controller\Homepage::class);
+		$theme = \Simple\Application::getInstance()['config']['app']['theme'];
+		$view = new Simple\View($theme, \Simple\Controller\Homepage::class);
 		$output = $view->renderFile('homepage.phtml');
 		$this->assertTrue((bool)preg_match('/<html/', $output));
 		$this->assertTrue((bool)preg_match('/<head>/', $output));
@@ -25,7 +26,7 @@ class ViewTest extends TestCase
 	 */
 	public function testRenderFile_exception()
 	{
-		$view = new Simple\View(null, \Simple\Controller\Homepage::class);
+		$view = new Simple\View('unknownTheme', \Simple\Controller\Homepage::class);
 		$e = null;
 		try {
 			$output = $view->renderFile('undefinedTemplate.phtml');

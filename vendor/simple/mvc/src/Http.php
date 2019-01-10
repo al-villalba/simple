@@ -55,7 +55,7 @@ class Http
 	 * @param array|string|int $headers
 	 * @param int|array $code
 	 */
-	public function __construct($body, $headers = [], $code = 200)
+	public function __construct($body = '', $headers = [], $code = 200)
 	{
 		// prepare args
 		$this->_bodyRaw    = $body;

@@ -9,15 +9,11 @@ namespace Simple;
  */
 class Route
 {
-    /**
-     * @var Http\Request
-     */
-    protected $_request;
-    
-	public function __construct($request)
-	{
-        $this->_request = $request;
-	}
+	/**
+	 * The route parameters
+	 * @var array
+	 */
+	protected $_route;
 	
 	/**
 	 * Matches request_uri against routes in config and returns the parameters
@@ -25,17 +21,21 @@ class Route
 	 * 
 	 * @return array
 	 */
-	public function get()
+	public function get($path = '')
 	{
+		if( !empty($this->_route) ) {
+			return $this->_route;
+		}
+		
 		$app = \Simple\Application::getInstance();
 		$routing = $app['config']['routing'];
         
-        if( empty($routing) || empty($this->_request) ) {
+        if( empty($routing) ) {
             throw new \Exception('Wrong routing setup');
         }
 		
 		$_route = [];
-		$url = parse_url($_SERVER['REQUEST_URI']);
+		$url = parse_url($path ?: $_SERVER['REQUEST_URI']);
 		if( strlen($url['path']) > 1 ) {
 			$url['path'] = rtrim($url['path'], '/');
 		}
@@ -64,10 +64,28 @@ class Route
 //					continue;
 //				}
 				unset($_matches[0]);
+				$pathParams = array_merge(
+					['namespace' => __NAMESPACE__],
+					array_combine($vars, $_matches)
+				);
+				array_walk($pathParams, function(&$v, $k) {
+					if( in_array($k, ['namespace', 'controller', 'action']) ) {
+						$v = \Simple\strCamelCase($v);
+					}
+					if( $k == 'action' ) {
+						$v = lcfirst($v);
+					}
+				});
 				$_route = array_merge(
 					['_match' => $pattern],
-					array_combine($vars, $_matches),
+					$pathParams,
 					$route
+				);
+				$querySplitter = ['__tail' => 0, '_match' => 1,'namespace' => 2,
+					'controller' => 3, 'action' => 4];
+				$_route = array_merge(
+					array_intersect_key($_route, $querySplitter),
+					['query' => array_diff_key($_route, $querySplitter)]
 				);
 				
 				// conclude with the query params
@@ -88,8 +106,8 @@ class Route
 					$query = [];
 					parse_str($url['query'], $query);
 					$_route['query'] = array_merge(
-						$query,
-						$_route['query'] ?? []
+						$_route['query'] ?? [],
+						$query
 					);
 				}
 
@@ -97,7 +115,9 @@ class Route
 			}
 		}
 		
-		return $_route;
+		$this->_route = $_route;
+		
+		return $this->_route;
 	}
 
 }
