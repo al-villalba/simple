@@ -4,10 +4,11 @@ namespace Simple\Command;
 
 use \Simple\Cli\Response;
 
-class Dummy
+class Dummy extends _CommandAbstract
 {
 	/**
 	 * Handle command "dummy"
+	 * 
 	 * @return \Simple\ResponseInterface
 	 */
 	public function run()

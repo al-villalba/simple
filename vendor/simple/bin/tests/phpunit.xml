@@ -31,8 +31,8 @@
 
 	<filter>
 		<whitelist processUncoveredFilesFromWhitelist="false">
+			<directory suffix=".php">../../mvc/controllers/</directory>
 			<directory suffix=".php">../../mvc/src/</directory>
-			<directory suffix=".php">../../vendor/simple/mvc/src/</directory>
 		</whitelist>
 	</filter>
 

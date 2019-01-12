@@ -8,7 +8,7 @@ use \Simple\Http\Response as HttpResponse;
  * Base controller mainly for cgi requests. Provide rendering functionality
  * by means of the View.
  */
-class Base
+abstract class _ControllerAbstract
 {
 	/**
 	 * App config
@@ -40,14 +40,35 @@ class Base
 	}
 
 	/**
+	 * Method executed just before the action
+	 * 
+	 * @param string $actionName
+	 * @return void
+	 */
+	public function _before($actionName)
+	{
+	}
+
+	/**
+	 * Method executed just after the action
+	 * 
+	 * @param string $actionName
+	 * @return void
+	 */
+	public function _after($actionName)
+	{
+	}
+
+	/**
 	 * Get an input parameter
 	 * 
 	 * @param int|string $key
+	 * @param mixed $default
 	 * @return string
 	 */
-	public function getParam($key)
+	public function getParam($key, $default = null)
 	{
-		return $this->_request->getParam($key);
+		return $this->_request->getParam($key, $default);
 	}
 
 	/**
@@ -143,26 +164,6 @@ class Base
 		$response->setHeader('Location', $url);
 
 		return $response;
-	}
-
-	/**
-	 * TODO
-	 * 
-	 * @param callable|string $goto
-	 * @return \Simple\ResponseInterface
-	 * @throws \Exception
-	 */
-	public function requireLogin($goto)
-	{
-		$app = \Simple\Application::getInstance();
-
-		if( is_callable($goto) ) {
-			$app['response'] = $this->renderAction($goto);
-		} elseif( is_string($goto) ) {
-			$app['response'] = $this->redirect($goto);
-		} else {
-			throw new \Exception('Unexpected login redirector');
-		}
 	}
 
 }

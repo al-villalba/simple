@@ -209,10 +209,10 @@ class Application implements \ArrayAccess
 	{
 		try {
 			// load controller/command class and define action metohd
-			list($controller, $action) = $this->_initRequest();
-			
+			list($controller, $action) = $this->initRequest();
+
+			// do not overwrite unit test's Mock_* controller
 			if( !isset($this['controller']) || substr(get_class($this['controller']), 0, 5) != 'Mock_' ) {
-				// do not overwrite unit test with Mock_* controller
 				$this['controller'] = new $controller();
 			}
 			$this['action'] = $action;
@@ -225,11 +225,13 @@ class Application implements \ArrayAccess
 			throw $e;
 		}
 
+		$this['controller']->_before($this['action']);
 		/** @var ResponseInterface */
 		$response = $this['controller']->{$this['action']}();
 		if( $this['response'] instanceof ResponseInterface ) {
 			$response = $this['response'];
 		}
+		$this['controller']->_after($this['action']);
 
 		if( ! $response instanceof ResponseInterface ) {
 			throw new \Exception(
@@ -247,7 +249,7 @@ class Application implements \ArrayAccess
 	/**
 	 * Define controller/command class and action method
 	 */
-	protected function _initRequest()
+	public function initRequest()
 	{
 		$this['route']   = new Route();
 		

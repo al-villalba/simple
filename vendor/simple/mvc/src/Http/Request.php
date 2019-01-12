@@ -45,7 +45,7 @@ class Request extends \Simple\Http implements \Simple\RequestInterface
 	 */
 	public function getParams()
 	{
-		return $this->getBody();
+		return $this->getBody() ?: [];
 	}
 
 }

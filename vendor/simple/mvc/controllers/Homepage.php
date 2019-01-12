@@ -2,7 +2,7 @@
 
 namespace Simple\Controller;
 
-class Homepage extends Base
+class Homepage extends _ControllerAbstract
 {
 	/**
 	 * Handle request Homepage/index
