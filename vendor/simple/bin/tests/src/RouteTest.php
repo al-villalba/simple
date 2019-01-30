@@ -4,26 +4,34 @@ use PHPUnit\Framework\TestCase;
 
 class RouteTest extends TestCase
 {
-	/**
-	 * Used globals, to backup and restore
-	 * @var array
-	 */
-	protected $_globals = [];
-
+	protected $_backup;
+	
 	protected function setUp()
 	{
-		// backup used globals
-		$this->_globals['_SERVER'] = $_SERVER;
+		global $argv;
 
+		$app = \Simple\Application::getInstance();
+		
+		// backup used globals
+		$this->_backup['_SERVER'] = $_SERVER;
+		$this->_backup['config'] = $app['config'];
+		
+		$config = $app['config'];
+		array_walk_recursive($config, function(&$v, $k) {
+			if( $k == 'namespace' ) {
+				$v = 'Simple';
+			}
+		});
+		$app['config'] = $config;
+		
 		parent::setUp();
 	}
 
 	protected function tearDown()
 	{
 		// restore globals
-		foreach( $this->_globals as $var => $value ) {
-			$$var = $value;
-		}
+		\Simple\Application::getInstance()['config'] = $this->_backup['config'];
+		$_SERVER = $this->_backup['_SERVER'];
 
 		parent::tearDown();
 	}

@@ -8,7 +8,7 @@ use \Simple\Http\Response as HttpResponse;
  * Base controller mainly for cgi requests. Provide rendering functionality
  * by means of the View.
  */
-abstract class _ControllerAbstract
+abstract class ControllerAbstract
 {
 	/**
 	 * App config
@@ -23,6 +23,20 @@ abstract class _ControllerAbstract
 	protected $_request;
 
 	/**
+	 * The name of the controller class. NOTE: Use getController() to get the
+	 * name of the controller correctly
+	 * @var string
+	 */
+	protected $_controller;
+
+	/**
+	 * The name of the action. NOTE: Use getController() to get the
+	 * name of the action correctly
+	 * @var string
+	 */
+	protected $_action;
+
+	/**
 	 * View object that renders templates
 	 * @var \Simple\View
 	 */
@@ -34,28 +48,41 @@ abstract class _ControllerAbstract
 	public function __construct()
 	{
 		$app = \Simple\Application::getInstance();
+		
+		static::_beforeController(static::class);
+		
 		$this->_config = $app['config']['app'];
 		$this->_request = $app['request'];
 		$this->_view = new \Simple\View($this->_config['theme'], static::class);
 	}
 
 	/**
-	 * Method executed just before the action
+	 * Called at the moment when $controllerName is constructed
 	 * 
-	 * @param string $actionName
+	 * @param string $controllerName
 	 * @return void
 	 */
-	public function _before($actionName)
+	public function _beforeController($controllerName)
 	{
 	}
 
 	/**
-	 * Method executed just after the action
+	 * Called just before the action
 	 * 
-	 * @param string $actionName
+	 * @param string $action
 	 * @return void
 	 */
-	public function _after($actionName)
+	public function _beforeAction($action)
+	{
+	}
+
+	/**
+	 * Called just after the action
+	 * 
+	 * @param string $action
+	 * @return void
+	 */
+	public function _afterAction($action)
 	{
 	}
 
@@ -90,7 +117,7 @@ abstract class _ControllerAbstract
 	{
 		$route = \Simple\Application::getInstance()['route']->get();
 
-		return $route['controller'] ?? null;
+		return $this->_controller ?? ($route['controller'] ?? null);
 	}
 
 	/**
@@ -102,7 +129,7 @@ abstract class _ControllerAbstract
 	{
 		$route = \Simple\Application::getInstance()['route']->get();
 
-		return $route['action'] ?? null;
+		return $this->_action ?? ($route['action'] ?? null);
 	}
 
 	/**
@@ -113,8 +140,11 @@ abstract class _ControllerAbstract
 	public function getNamespace()
 	{
 		$route = \Simple\Application::getInstance()['route']->get();
+		
+		$controllerPath = explode('\\', $this->getController());
+		$ns = array_slice($controllerPath, 0, -1);
 
-		return $route['namespace'] ?? null;
+		return $ns ? implode('\\', $ns) : ($route['namespace'] ?? null);
 	}
 
 	/**
@@ -149,7 +179,21 @@ abstract class _ControllerAbstract
 	 */
 	public function renderAction($callback, $args = [])
 	{
-		return call_user_func_array($callback, $args);
+		$app = \Simple\Application::getInstance();
+		
+		$callback[0]->_beforeAction($callback[1]);
+		if( isset($app['response']) && $app['response'] instanceof \Simple\ResponseInterface ) {
+			/** @var ResponseInterface $response defined in _before() */
+			$response = $app['response'];
+		} else {
+			/** @var ResponseInterface $response */
+			$this->_controller = get_class($callback[0]);
+			$this->_action     = $callback[1];
+			$response = call_user_func_array($callback, $args);
+		}
+		$callback[0]->_afterAction($callback[1]);
+		
+		return $response;
 	}
 
 	/**

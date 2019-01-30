@@ -2,4 +2,5 @@
 
 require __DIR__ . '/../../mvc/src/bootstrap.php';
 
-//$app = Simple\Application::getInstance();
+// instantiate for autoloading
+\Simple\Application::getInstance();

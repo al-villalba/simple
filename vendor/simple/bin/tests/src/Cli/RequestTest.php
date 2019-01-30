@@ -39,7 +39,7 @@ class CliRequestTest extends TestCase
 	 */
 	public function test__construct()
 	{
-		$request = new \Simple\Cli\Request();
+		$request = new Request();
 		$this->assertTrue($request instanceof \Simple\Cli\Request);
 		
 		$this->assertTrue(($request->getOptions() === null || 

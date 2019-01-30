@@ -4,11 +4,17 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Test Simple\Application
- * (singleton)
+ * (singleton,
+ *  avoid Error: Using $this in template, and
+ *  http headers already sent in PHPUnit/Util/Printer.php
  * @runTestsInSeparateProcesses
+ * 
+ * @author Alvaro <alvaro.simplemvc@gmail.com>
  */
 class ApplicationTest extends TestCase
 {
+	protected $_backup;
+	
 	/**
 	 * @var array
 	 */
@@ -24,9 +30,20 @@ class ApplicationTest extends TestCase
 	{
 		global $argv;
 
+		$app = \Simple\Application::getInstance();
+		
 		// backup used globals
-		$this->_globals['_SERVER'] = $_SERVER;
-		$this->_globals['argv'] = $argv;
+		$this->_backup['_SERVER'] = $_SERVER;
+		$this->_backup['argv'] = $argv;
+		$this->_backup['config'] = $app['config'];
+		
+		$config = $app['config'];
+		array_walk_recursive($config, function(&$v, $k) {
+			if( $k == 'namespace' ) {
+				$v = 'Simple';
+			}
+		});
+		$app['config'] = $config;
 
 		if( !class_exists(\Simple\Cli\CliRequestTest::class) ) {
 			include_once __DIR__ . '/Cli/RequestTest.php';
@@ -40,9 +57,9 @@ class ApplicationTest extends TestCase
 		global $argv;
 
 		// restore globals
-		foreach( $this->_globals as $var => $value ) {
-			$$var = $value;
-		}
+		$_SERVER = $this->_backup['_SERVER'];
+		$argv    = $this->_backup['argv'];
+		\Simple\Application::getInstance()['config'] = $this->_backup['config'];
 
 		parent::tearDown();
 	}
@@ -97,61 +114,6 @@ class ApplicationTest extends TestCase
 		
 		$_str = \Simple\strCamelCase($slug);
 		$this->assertSame('CamelCaseTest', $_str);
-	}
-
-	/**
-	 * Test app['db']; \PDO::query + \PDOStatement::fetch
-	 */
-	public function testDbFetch()
-	{
-		$app = \Simple\Application::getInstance();
-		
-		if( empty($app['config']['database']) ) {
-			$this->assertNull($app['db']);
-			return;
-		}
-		$this->assertTrue($app['db'] instanceof \PDO);
-
-		// simple query
-		$q = "SHOW TABLES";
-		$stmt = $app['db']->query($q);
-		$results = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-
-		$this->assertTrue(is_array($results));
-		$this->assertTrue(count($results) > 0);
-
-		// prepared query with ? parameters
-		$q = "SHOW TABLES LIKE ?";
-		$stmt = $app['db']->prepare($q);
-		$stmt->execute(['%']);
-		$results = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-
-		$this->assertTrue(is_array($results));
-		$this->assertTrue(count($results) > 0);
-
-		// prepared query with named parameters
-		$q = "SHOW TABLES LIKE :tablename";
-		$stmt = $app['db']->prepare($q);
-		$stmt->execute([':tablename' => '%']);
-		$results = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-
-		$this->assertTrue(is_array($results));
-		$this->assertTrue(count($results) > 0);
-	}
-
-	/**
-	 * Test app['db']; \PDO::exec
-	 */
-	public function testDbExec()
-	{
-		$app = \Simple\Application::getInstance();
-		
-		$app['db']->exec("SET time_zone = '+00:00'");
-		$this->assertSame('00000', $app['db']->errorCode());
-
-		$stmt = $app['db']->query("SELECT @@global.time_zone, @@session.time_zone");
-		$results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-		$this->assertSame([['@@global.time_zone' => 'SYSTEM', '@@session.time_zone' => '+00:00']], $results);
 	}
 
 	/**
@@ -215,12 +177,12 @@ class ApplicationTest extends TestCase
 	{
 		$app = \Simple\Application::getInstance();
 		
-		$stubController = 
+		$mockController = 
 			$this->createMock(\Simple\Controller\Homepage::class);
-		$stubController->expects($this->once())
+		$mockController->expects($this->once())
 				->method('index')
 				->willReturn(null);
-		$app['controller'] = $stubController;
+		$app['controller'] = $mockController;
 
 		// simulate cgi request
 		$app['sapi_name'] = 'cgi';

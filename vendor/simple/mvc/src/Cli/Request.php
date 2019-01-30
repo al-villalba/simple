@@ -101,4 +101,18 @@ class Request implements \Simple\RequestInterface
 		return array_merge($this->_args, $this->_params);
 	}
 
+	/**
+	 * Get the request method (Usually GET or POST)
+	 * 
+	 * @return string
+	 */
+	public function getMethod()
+	{
+		if( isset($this->_options['post']) || isset($this->_options['p']) ) {
+			return 'POST';
+		}
+		
+		return 'GET';
+	}
+
 }

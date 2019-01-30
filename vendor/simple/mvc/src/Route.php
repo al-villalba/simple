@@ -28,7 +28,8 @@ class Route
 		}
 		
 		$app = \Simple\Application::getInstance();
-		$routing = $app['config']['routing'];
+		$method = $_SERVER['REQUEST_METHOD'] ?? $app['request']->getMethod();
+		$routing = $app['config']['routing'][$method] ?? null;
         
         if( empty($routing) ) {
             throw new \Exception('Wrong routing setup');
@@ -118,6 +119,17 @@ class Route
 		$this->_route = $_route;
 		
 		return $this->_route;
+	}
+
+	/**
+	 * Generate the url from the routing parameters
+	 * @TODO
+	 * 
+	 * @return string
+	 */
+	public function generateUrl()
+	{
+		return '';
 	}
 
 }

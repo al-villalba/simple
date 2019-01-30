@@ -72,6 +72,7 @@ class HttpTest extends TestCase
 		// content type www-form-urlencoded (as a response)
 		$http = new \Simple\Http(['a' => '0', 'b' => '1'],
 			"HTTP/1.1 200 OK\r\ncontent-type: application/x-www-form-urlencoded");
+		$this->assertSame('a=0&b=1', $http->getBody());
 		$this->assertSame("HTTP/1.1 200 OK\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\na=0&b=1", (string)$http);
 
 		// content type json (as a request)
@@ -82,6 +83,7 @@ class HttpTest extends TestCase
 		// content type json (as a response)
 		$http = new \Simple\Http(['a' => 0, 'b' => 1],
 			"HTTP/1.1 200 OK\r\ncontent-type: application/json");
+		$this->assertSame('{"a":0,"b":1}', $http->getBody());
 		$this->assertSame("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"a\":0,\"b\":1}", (string)$http);
 
 		// content encoding gzip (as a request)
@@ -92,6 +94,7 @@ class HttpTest extends TestCase
 		// content encoding gzip (as a response)
 		$http = new \Simple\Http(['a' => 0, 'b' => 1],
 			"HTTP/1.1 200 OK\r\ncontent-encoding: gzip\r\ncontent-type: application/json");
+		$this->assertSame(gzencode('{"a":0,"b":1}'), $http->getBody());
 		$this->assertSame("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/json\r\n\r\n" . gzencode('{"a":0,"b":1}'), (string)$http);
 	}
 

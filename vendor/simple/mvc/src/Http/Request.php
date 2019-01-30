@@ -48,4 +48,14 @@ class Request extends \Simple\Http implements \Simple\RequestInterface
 		return $this->getBody() ?: [];
 	}
 
+	/**
+	 * Get the request method (Usually GET or POST)
+	 * 
+	 * @return string
+	 */
+	public function getMethod()
+	{
+		return $_SERVER['REQUEST_METHOD'];
+	}
+
 }

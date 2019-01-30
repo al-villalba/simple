@@ -7,6 +7,8 @@ namespace Simple;
  * backend developer to load only! those resources that are necessary for a
  * concrete request. Requests may come from the command line or from the web
  * server interface (cgi).
+ * 
+ * @author Alvaro <alvaro.simplemvc@gmail.com>
  */
 class Application implements \ArrayAccess
 {
@@ -32,7 +34,7 @@ class Application implements \ArrayAccess
 		$this['env'] = APP_ENV;
 
 		$this->_loadConfig()
-			->_initDb();
+			->_autoloadRegister();
 	}
 
 	/**
@@ -95,6 +97,20 @@ class Application implements \ArrayAccess
 	public function offsetGet($key)
 	{
 		if( !isset($this->_attributes[$key]) ) {
+			// try to autoload class using naming convention (only models)
+			foreach( $this['config']['autoload'] as $ns => $path ) {
+				$className = "$ns\\" . strCamelCase($key);
+				if( substr(rtrim($path, '/'), -4) == '/src' &&
+					class_exists($className)
+				) {
+					if( is_callable([$className, 'factory']) ) {
+						$this->_attributes[$key] = $className::factory();
+					} else {
+						$this->_attributes[$key] = new $className();
+					}
+					return $this->_attributes[$key];
+				}
+			}
 			return null;
 		}
 
@@ -178,23 +194,36 @@ class Application implements \ArrayAccess
 	 * 
 	 * @return Application
 	 */
-	protected function _initDb()
+	protected function _autoloadRegister()
 	{
-		$this['db'] = null;
-		if( empty($this['config']['database']) ) {
-			return $this;
+		$nsPaths = [];
+		foreach( $this['config']['autoload'] as $ns => $path ) {
+			$nsPaths[$ns] = $path;
 		}
 
-		$dsn = "{$this['config']['database']['driver']}"
-			. ":dbname={$this['config']['database']['name']}"
-			. ";host={$this['config']['database']['host']}";
-		try {
-			$this['db'] = new \PDO($dsn,
-				$this['config']['database']['user'],
-				$this['config']['database']['password']);
-		} catch(\Exception $e) {
-			throw new \Exception('Connection to db failed: ' . $e->getMessage());
-		}
+//		set_include_path(get_include_path().':'.realpath(__DIR__));
+		spl_autoload_extensions(".php,.inc");
+		spl_autoload_register( function($className) use ($nsPaths)
+		{
+			$_classNs = explode('\\', $className);
+			array_splice($_classNs, -1);
+			$classNs = implode('\\', $_classNs);
+			if( empty($classNs) || !in_array($_classNs[0], array_keys($nsPaths)) ) {
+				return;
+			}
+
+			foreach( explode(',', spl_autoload_extensions()) as $ext )
+			{
+				foreach( $nsPaths as $ns => $path ) {
+					$classPath = str_replace("\\", "/",
+						str_replace($ns, $path, $className . $ext));
+					if( is_readable($classPath) ) {
+						require_once $classPath;
+						return;
+					}
+				}
+			}
+		});
 
 		return $this;
 	}
@@ -217,21 +246,23 @@ class Application implements \ArrayAccess
 			}
 			$this['action'] = $action;
 		} catch( \Exception $e ) {
-			// ???
+			// @todo ???
 			throw $e;
 		} catch( \Error $e ) {
 			// 404 exception
-			// TODO: log detail info, throw a 404
+			// @todo: log detail info, throw a 404
 			throw $e;
 		}
 
-		$this['controller']->_before($this['action']);
-		/** @var ResponseInterface */
-		$response = $this['controller']->{$this['action']}();
-		if( $this['response'] instanceof ResponseInterface ) {
+		$this['controller']->_beforeAction($this['action']);
+		if( isset($this['response']) && $this['response'] instanceof ResponseInterface ) {
+			/** @var ResponseInterface $response defined in _before() */
 			$response = $this['response'];
+		} else {
+			/** @var ResponseInterface $response */
+			$response = $this['controller']->{$this['action']}();
 		}
-		$this['controller']->_after($this['action']);
+		$this['controller']->_afterAction($this['action']);
 
 		if( ! $response instanceof ResponseInterface ) {
 			throw new \Exception(

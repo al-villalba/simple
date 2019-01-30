@@ -151,10 +151,10 @@ class View
 			return $output;
 
 		} catch (\Exception $e) {
-			// TODO error handling
+			// @todo error handling
 			throw $e;
 		} catch (\Throwable $e) {
-			// TODO error handling
+			// @todo error handling
 			throw $e;
 		}
 	}
@@ -195,13 +195,17 @@ class View
 	 * Store current buffer contents into the stack and turn off ob
 	 * @param string $name
 	 */
-	public function endBlock($name)
+	public function endBlock($name, $append = false)
 	{
 		if( isset($this->_blockStack[$name]) ) {
-			ob_end_clean();
-			throw new \Exception("Block '$name' already defined");
+			if( !$append ) {
+				ob_end_clean();
+				throw new \Exception("Block '$name' already defined");
+			}
+		} else {
+			$this->_blockStack[$name] = '';
 		}
-		$this->_blockStack[$name] = ob_get_clean();
+		$this->_blockStack[$name] .= ob_get_clean();
 	}
 
 	/**
@@ -212,10 +216,9 @@ class View
 	 */
 	public function block($name)
 	{
-		if( !isset($this->_blockStack[$name]) ) {
-			throw new \Exception("Block '$name' is undefined");
+		if( isset($this->_blockStack[$name]) ) {
+			echo $this->_blockStack[$name];
 		}
-		echo $this->_blockStack[$name];
 	}
 
 }

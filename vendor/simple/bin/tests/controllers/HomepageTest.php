@@ -3,12 +3,42 @@
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test Simple\RequestFactory
+ * Test Simple\Controller\Homepage
  * (avoid Error: Using $this in template)
  * @runTestsInSeparateProcesses
  */
 class HomepageTest extends TestCase
 {
+	protected $_backup;
+	
+	protected function setUp()
+	{
+		global $argv;
+
+		$app = \Simple\Application::getInstance();
+		
+		// backup used globals
+		$this->_backup['config'] = $app['config'];
+		
+		$config = $app['config'];
+		array_walk_recursive($config, function(&$v, $k) {
+			if( $k == 'namespace' ) {
+				$v = 'Simple';
+			}
+		});
+		$app['config'] = $config;
+		
+		parent::setUp();
+	}
+
+	protected function tearDown()
+	{
+		// restore globals
+		\Simple\Application::getInstance()['config'] = $this->_backup['config'];
+
+		parent::tearDown();
+	}
+
 	/**
 	 * Test instance of \Simple\RequestFactory
 	 */

@@ -22,4 +22,11 @@ interface RequestInterface
 	 */
 	public function getParams();
 
+	/**
+	 * Get the request method (Usually GET or POST)
+	 * 
+	 * @return string
+	 */
+	public function getMethod();
+
 }

@@ -193,7 +193,7 @@ class Http
 	 * @param int $action How to handle body content: Encode it or decode it
 	 * @return string
 	 */
-	public function getBody($action = self::BODY_DECODE)
+	public function getBody($action = null)
 	{
 		// trivial cases
 		if( $this->_body !== null ) {
@@ -202,6 +202,14 @@ class Http
 		if( empty($this->_bodyRaw) ) {
 			$this->_body = $this->_bodyRaw;
 			return $this->_body;
+		}
+		
+		// find out action if not given
+		if( $action === null ) {
+			$action = self::BODY_DECODE;
+			if( !is_string($this->_bodyRaw) ) {
+				$action = self::BODY_ENCODE;
+			}
 		}
 
 		$this->_body = $this->_bodyRaw;
