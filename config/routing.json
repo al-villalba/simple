@@ -1,22 +1,24 @@
 {
-	"/{namespace}/{controller}/{action}/*" : {
-	},
+	"GET" : {
+		"/{namespace}/{controller}/{action}/*" : {
+		},
 
-	"/{namespace}/{controller}/{action}" : {
-	},
+		"/{namespace}/{controller}/{action}" : {
+		},
 
-	"/{controller}/{action}/*" : {
-	},
+		"/{controller}/{action}/*" : {
+		},
 
-	"/{controller}/{action}" : {
-	},
+		"/{controller}/{action}" : {
+		},
 
-	"/{controller}" : {
-		"action" : "index"
-	},
+		"/{controller}" : {
+			"action" : "index"
+		},
 
-	"/" : {
-		"controller" : "Homepage",
-		"action"     : "index"
+		"/" : {
+			"controller" : "Homepage",
+			"action"     : "index"
+		}
 	}
 }
