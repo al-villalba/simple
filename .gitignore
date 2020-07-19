@@ -4,9 +4,3 @@ nbproject/
 test-coverage/
 
 config/local
-mvc/controllers/*
-!mvc/controllers/.gitkeep
-mvc/src/*
-!mvc/src/.gitkeep
-mvc/views/*
-!mvc/views/.gitkeep
