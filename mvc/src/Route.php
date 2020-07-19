@@ -34,7 +34,7 @@ class Route
 		$routing = $app['config']['routing'][$method] ?? null;
         
         if( empty($routing) ) {
-            throw new \Exception('Wrong routing setup');
+            throw new \Exception('Route not found', 404);
         }
 		
 		$_route = [];
@@ -73,7 +73,7 @@ class Route
 								array_splice($vars, $_i, 0, [$k]);
 								$v = $_matches[$_i];
 							} else {
-								throw new \Exception("Ruote param not matched for '$k : $v");
+								throw new \Exception("Ruote param not matched for '$k : $v", 400);
 							}
 						}
 					}
@@ -89,7 +89,7 @@ class Route
 				);
 				array_walk($_route, function(&$v, $k) {
 					if( in_array($k, ['namespace', 'controller', 'action']) ) {
-						$v = \Simple\strCamelCase($v);
+						$v = \strCamelCase($v);
 					}
 					if( $k == 'action' ) {
 						$v = lcfirst($v);

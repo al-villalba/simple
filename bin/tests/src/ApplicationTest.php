@@ -125,10 +125,10 @@ class ApplicationTest extends TestCase
 	public function testGlobals()
 	{
 		$str = 'camelCaseTest';
-		$slug = \Simple\strSlugify($str);
+		$slug = \strSlugify($str);
 		$this->assertSame('camel-case-test', $slug);
 		
-		$_str = \Simple\strCamelCase($slug);
+		$_str = \strCamelCase($slug);
 		$this->assertSame('CamelCaseTest', $_str);
 	}
 

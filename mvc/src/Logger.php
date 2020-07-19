@@ -24,7 +24,7 @@ class Logger
 	 * Default log file
 	 * @see config/log.json:means:file
 	 */
-	const FILE_PATH = PATH_VAR . '/log/app.log';
+	const FILE_PATH = PATH_ROOT . '/var/log/app.log';
 
 	/**
 	 * Self object only for internal use.
@@ -43,6 +43,10 @@ class Logger
 	public static function log($msg, $level = null)
 	{
 		$app = \Simple::app();
+
+		if( !isset($app->config['log']) ) {
+			return;
+		}
 
 		$levelFilter = self::LEVEL[strtoupper($app->config['log']['level'])];
 		if( $level < $levelFilter ) {

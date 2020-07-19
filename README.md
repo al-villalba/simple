@@ -3,7 +3,7 @@ Motivation
 ==========
 
 Simple (abreviation of SimpleMVC) is yet another PHP microframework. It's all
-about routing, http request, and http response. The porpose of this framework
+about routing, http request, and http response. The purpose of this framework
 is to provide programmers the structure of a project following the MVC pattern
 with a KISS philosofy (keep-it-stupid-simple).
 

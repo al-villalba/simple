@@ -9,6 +9,7 @@ use \Simple\Http\Response as HttpResponse;
  * by means of the View.
  * 
  * @author Alvaro <alvaro.simplemvc@gmail.com>
+ * @license https://opensource.org/licenses/MIT MIT
  */
 abstract class ControllerAbstract
 {

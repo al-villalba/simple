@@ -36,8 +36,7 @@ class Application implements \ArrayAccess
 		$this->env = APP_ENV;
 
 		$this->_loadConfig()
-			->_registerThrowableHandler()
-			->_registerAutoload();
+			->_registerThrowableHandler();
 
 		if( !empty($this->config['app']['date']['timezone']) ) {
 			date_default_timezone_set($this->config['app']['date']['timezone']);
@@ -209,15 +208,16 @@ class Application implements \ArrayAccess
 	protected function _loadConfig()
 	{
 		$config = [];
+		$configPath = PATH_ROOT . '/config';
 
 		// read config files (global)
-		foreach( glob(PATH_CONFIG . '/*.json') as $cfgPath ) {
+		foreach( glob("$configPath/*.json") as $cfgPath ) {
 			$config[basename($cfgPath, '.json')] =
 				json_decode(file_get_contents($cfgPath), true);
 		}
 		// overwrite configs with enviromental values
-		if( is_dir(PATH_CONFIG . "/{$this->env}") ) {
-			foreach( glob(PATH_CONFIG . "/{$this->env}/*.json") as $cfgPath ) {
+		if( is_dir("$configPath/{$this->env}") ) {
+			foreach( glob("$configPath/{$this->env}/*.json") as $cfgPath ) {
 				$config[basename($cfgPath, '.json')] = array_replace_recursive(
 					$config[basename($cfgPath, '.json')] ?? [],
 					json_decode(file_get_contents($cfgPath), true)
@@ -248,27 +248,6 @@ class Application implements \ArrayAccess
 	}
 
 	/**
-	 * Initialise resource db
-	 * 
-	 * @return Application
-	 */
-	protected function _registerAutoload()
-	{
-		$nsPaths = [];
-		foreach( $this->config['autoload'] as $ns => $path ) {
-			$nsPaths[$ns] = $path;
-		}
-		
-		$classLoader = new ClassLoader($nsPaths);
-
-//		set_include_path(get_include_path().':'.realpath(__DIR__));
-		spl_autoload_extensions(".php,.inc");
-		spl_autoload_register( [$classLoader, 'loadClass'] );
-
-		return $this;
-	}
-
-	/**
 	 * Inject Logger in Throwables
 	 * @see https://www.php.net/manual/en/function.set-exception-handler.php
 	 * 
@@ -276,7 +255,7 @@ class Application implements \ArrayAccess
 	 */
 	protected function _registerThrowableHandler()
 	{
-		if( !$this->config['log']['log_errors'] ) {
+		if( !($this->config['log']['log_errors'] ?? false) ) {
 			return $this;
 		}
 
@@ -329,7 +308,8 @@ class Application implements \ArrayAccess
 		list($controller, $action) = $this->initRequest();
 		if( !class_exists($controller) || !method_exists($controller, $action) ) {
 			Logger::info("[$controller, $action] 404 not found");
-			$response = new Http\Response('Not Found', 404);
+			// TODO (return Response, throw exception, define 404 handlers,...)
+			$response = new Http\Response("[$controller, $action] Not Found", 404);
 			return $this->end($response);
 		}
 
@@ -373,13 +353,13 @@ class Application implements \ArrayAccess
 			$this->request = RequestFactory::create();
 			$cmd = explode('/', trim($this->request->getParam(0), '/'));
 			$route = $this->route->get('/' . __NAMESPACE__
-				. '/' . \Simple\strCamelCase($cmd[0])
-				. '/' . (isset($cmd[1]) ? lcfirst(\Simple\strCamelCase($cmd[1])) : 'run')
+				. '/' . \strCamelCase($cmd[0])
+				. '/' . (isset($cmd[1]) ? lcfirst(\strCamelCase($cmd[1])) : 'run')
 			);
 			// @todo actual __NAMESPACE__ (not \Simple) must be included
 			if( empty($route) ) {
-				$route = $this->route->get('/' . \Simple\strCamelCase($cmd[0])
-					. '/' . (isset($cmd[1]) ? lcfirst(\Simple\strCamelCase($cmd[1])) : 'run')
+				$route = $this->route->get('/' . \strCamelCase($cmd[0])
+					. '/' . (isset($cmd[1]) ? lcfirst(\strCamelCase($cmd[1])) : 'run')
 				);
 			}
 			/** @see http://php.net/manual/en/language.namespaces.dynamic.php */
