@@ -1,0 +1,14 @@
+<?php $this->extendTemplate('layouts/main.phtml'); ?>
+
+<?php $this->startBlock(); ?>
+<div class="trunkContainer row align-items-center">
+	<div class="col-12 col-md-9 align-self-center">
+		<section>
+			<h2>Section</h2>
+		</section>
+	</div>
+	<div class="col-12 col-md-3 align-self-center">
+		<?php $this->requireTemplate('widgets/aside.phtml'); ?>
+	</div>
+</div>
+<?php $this->endBlock('trunk'); ?>

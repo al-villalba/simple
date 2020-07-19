@@ -1,0 +1,39 @@
+<phpunit bootstrap="./bootstrap.php"
+		 stopOnFailure="true"
+		 stopOnError="true"
+		 colors="true">
+
+	<php>
+		<env name="APP_ENV" value="local"/>
+		<env name="DB_HOST" value="localhost"/>
+		<env name="DB_NAME" value="casino"/>
+		<env name="DB_USER" value="casino"/>
+		<env name="DB_PASS" value="casino"/>
+	</php>
+
+	<testsuites>
+		<testsuite name="priority">
+			<file>./src/DebugTest.php</file>
+		</testsuite>
+		<testsuite name="all">
+			<directory>.</directory>
+			<exclude>./src/DebugTest.php</exclude>
+			<exclude>./src/ApplicationTest.php</exclude>
+		</testsuite>
+		<testsuite name="last">
+			<file>./src/ApplicationTest.php</file>
+		</testsuite>
+	</testsuites>
+
+	<logging>
+		<log type="coverage-html" target="/home/pichu/public_html/test-coverage/simple" lowUpperBound="35" highLowerBound="70"/>
+	</logging>
+
+	<filter>
+		<whitelist processUncoveredFilesFromWhitelist="false">
+			<directory suffix=".php">../../mvc/controllers/</directory>
+			<directory suffix=".php">../../mvc/src/</directory>
+		</whitelist>
+	</filter>
+
+</phpunit>
