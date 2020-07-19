@@ -1,5 +1,0 @@
-*.komodoproject
-.komodotools
-*.kdev4
-vendor/
-composer.lock
