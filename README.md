@@ -7,6 +7,7 @@ about routing, http request, and http response. The porpose of this framework
 is to provide programmers the structure of a project following the MVC pattern
 with a KISS philosofy (keep-it-stupid-simple).
 
+
 File System Organigram
 ======================
 
